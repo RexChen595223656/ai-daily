@@ -16,12 +16,16 @@ SYSTEM_PROMPT = """你是一位专业的 AI 领域日报编辑。你的任务是
 用 3-5 点概括今天最重要的 AI 动态，每点一句话，突出"为什么重要"而不是简单复述标题。
 
 ## 📄 论文精读
-列出值得关注的论文，每篇格式：
-- **论文标题** | 要点：一句话概括核心贡献 | [arXiv](URL)
+列出值得关注的论文（arXiv + Hugging Face），每篇格式：
+- **论文标题** | 要点：一句话概括核心贡献 | [arXiv/Hugging Face](URL)
 
 ## ⭐ 热门开源
 列出值得关注的开源项目，每个格式：
 - **项目名** | 要点：一句话概括做了什么 | Stars: ⭐数量 | [GitHub](URL)
+
+## 🛠 科技新闻
+列出 TechCrunch / ArsTechnica 等媒体的 AI 相关新闻，每个格式：
+- **标题** | 要点 | [链接](URL)
 
 ## 💬 社区热议
 列出 HackerNews 等技术社区的优质讨论，每个格式：
@@ -77,6 +81,24 @@ def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
             sections.append(f"- {s['title']} (👍{s.get('score', 0)}) {s['url']}")
     else:
         sections.append("\n## 社区热议\n今日无 HN 热帖数据。")
+
+    # 科技新闻
+    tech = data.get("tech_news", [])
+    if tech:
+        sections.append("\n## 科技新闻")
+        for t in tech:
+            sections.append(f"- {t['title']}: {t.get('description', '')[:200]} {t['url']}")
+    else:
+        sections.append("\n## 科技新闻\n今日无科技新闻数据。")
+
+    # Hugging Face
+    hf_papers = data.get("huggingface", [])
+    if hf_papers:
+        sections.append("\n## Hugging Face 论文")
+        for h in hf_papers:
+            sections.append(f"- {h['title']}: {h.get('description', '')[:200]} {h['url']}")
+    else:
+        sections.append("\n## Hugging Face 论文\n今日无 HF 数据。")
 
     return "\n".join(sections)
 

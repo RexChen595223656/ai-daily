@@ -200,19 +200,101 @@ def fetch_hackernews(top_n: int = 10) -> List[Dict]:
     return stories
 
 
-def fetch_all(max_arxiv: int = 8, max_hn: int = 30) -> Dict[str, List[Dict]]:
+def fetch_tech_news(max_results: int = 5) -> List[Dict]:
+    """从 RSS 聚合 AI 科技新闻（TechCrunch + ArsTechnica）"""
+    rss_feeds = [
+        "https://techcrunch.com/category/artificial-intelligence/feed/",
+        "https://feeds.arstechnica.com/arstechnica/index",
+    ]
+    items = []
+    seen_urls = set()
+
+    for feed_url in rss_feeds:
+        try:
+            # 先用 requests 获取原始 XML（避免 SSL 问题）
+            resp = requests.get(feed_url, headers=HEADERS, timeout=20)
+            resp.raise_for_status()
+            feed = feedparser.parse(resp.text)
+        except Exception:
+            continue
+
+        for entry in feed.entries:
+            url = entry.get("link", "")
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            title = entry.get("title", "")
+            summary = entry.get("summary", "")
+            # 清理 HTML 标签
+            summary_clean = re.sub(r"<[^>]+>", "", summary)[:200]
+
+            items.append({
+                "title": title,
+                "url": url,
+                "description": summary_clean,
+                "source": "tech_news"
+            })
+            if len(items) >= max_results:
+                break
+        if len(items) >= max_results:
+            break
+
+    return items[:max_results]
+
+
+def fetch_huggingface(max_results: int = 5) -> List[Dict]:
+    """从 Hugging Face Daily Papers 获取最新论文"""
+    url = "https://huggingface.co/papers"
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=30)
+        resp.raise_for_status()
+    except requests.RequestException:
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    papers = []
+
+    # HF papers 页面：每篇论文在 article 标签内
+    for article in soup.select("article")[:max_results]:
+        link = article.select_one("a[href*='/papers/']")
+        if not link:
+            continue
+        title = link.text.strip()
+        href = link.get("href", "")
+        paper_url = f"https://huggingface.co{href}" if href.startswith("/") else href
+
+        # 描述/摘要
+        desc_elem = article.select_one("p")
+        description = desc_elem.text.strip()[:300] if desc_elem else ""
+
+        papers.append({
+            "title": title,
+            "url": paper_url,
+            "description": description,
+            "source": "huggingface"
+        })
+
+    return papers
+
+
+def fetch_all(max_arxiv: int = 8, max_hn: int = 30,
+              max_ph: int = 5, max_hf: int = 5) -> Dict[str, List[Dict]]:
     """抓取所有数据源，返回聚合结果"""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     papers = fetch_arxiv(max_results=max_arxiv)
     repos = fetch_github_trending()
     stories = fetch_hackernews(top_n=max_hn)
+    tech = fetch_tech_news(max_results=max_ph)
+    hf_papers = fetch_huggingface(max_results=max_hf)
 
     return {
         "date": now,
         "arxiv_papers": papers,
         "github_trending": repos,
         "hackernews": stories,
+        "tech_news": tech,
+        "huggingface": hf_papers,
     }
 
 

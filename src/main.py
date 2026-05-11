@@ -24,6 +24,8 @@ def main():
     parser = argparse.ArgumentParser(description="AI 日报生成器")
     parser.add_argument("--arxiv", type=int, default=8, help="arXiv 论文数量")
     parser.add_argument("--hn", type=int, default=30, help="Hacker News 抓取数量")
+    parser.add_argument("--ph", type=int, default=5, help="Product Hunt 产品数量")
+    parser.add_argument("--hf", type=int, default=5, help="Hugging Face 论文数量")
     parser.add_argument("--no-ai", action="store_true", help="仅抓取数据，不调用 AI")
     parser.add_argument("--model", default="deepseek-chat", help="LLM 模型名称")
     parser.add_argument("--output", type=str, help="输出文件路径（默认 output/daily-<日期>.html）")
@@ -31,13 +33,18 @@ def main():
 
     # Step 1: 抓取数据
     print("🔍 正在抓取数据源...")
-    raw_data = fetch_all(max_arxiv=args.arxiv, max_hn=args.hn)
+    raw_data = fetch_all(max_arxiv=args.arxiv, max_hn=args.hn,
+                         max_ph=args.ph, max_hf=args.hf)
     arxiv_count = len(raw_data["arxiv_papers"])
     github_count = len(raw_data["github_trending"])
     hn_count = len(raw_data["hackernews"])
+    ph_count = len(raw_data["tech_news"])
+    hf_count = len(raw_data["huggingface"])
     print(f"   arXiv: {arxiv_count} 篇论文")
     print(f"   GitHub: {github_count} 个热门仓库")
     print(f"   HN:     {hn_count} 条热帖")
+    print(f"   News:   {ph_count} 条科技新闻")
+    print(f"   HF:     {hf_count} 篇论文")
 
     if args.no_ai:
         # 调试模式：直接输出原始数据汇总
