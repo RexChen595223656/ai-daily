@@ -18,79 +18,93 @@ DAILY_TEMPLATE = """<!DOCTYPE html>
     <title>AI 日报 - {date}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {{
+        tailwind.config = {
             darkMode: 'class',
-            theme: {{
-                extend: {{
-                    colors: {{ primary: '#6366f1', accent: '#06b6d4' }},
-                    fontFamily: {{ sans: ['-apple-system', 'BlinkMacSystemFont', '"Noto Sans SC"', '"Segoe UI"', 'Roboto', 'sans-serif'] }},
-                }}
-            }}
-        }}
+            theme: {
+                extend: {
+                    colors: { primary: '#6366f1', accent: '#06b6d4' },
+                    fontFamily: { sans: ['-apple-system', 'BlinkMacSystemFont', '"Noto Sans SC"', '"Segoe UI"', 'Roboto', 'sans-serif'] },
+                }
+            }
+        }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        body {{ font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; }}
-        code {{ font-family: 'JetBrains Mono', monospace; }}
-        .section-card {{
-            background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
-        }}
-        .source-badge {{
-            display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px;
-            font-size: 0.75rem; font-weight: 600; white-space: nowrap;
-        }}
-        .key-point {{
-            padding: 1rem 1.25rem; margin-bottom: 0.75rem; border-radius: 12px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #f0f1ff 100%);
-            border-left: 4px solid #6366f1;
-        }}
-        .key-point:last-child {{ margin-bottom: 0; }}
-        .item-card {{
-            padding: 0.875rem 1rem; margin-bottom: 0.625rem; border-radius: 10px;
-            border: 1px solid #f0f0f0;
-        }}
-        .item-card:hover {{ border-color: #e0e0ff; background: #fafaff; }}
-        .item-card:last-child {{ margin-bottom: 0; }}
-        .editor-note {{
-            background: linear-gradient(135deg, #fef9f0 0%, #fff4e6 100%);
-            border-radius: 12px; padding: 1.25rem; border-left: 4px solid #f59e0b;
-        }}
-        .nav-btn {{
-            display: inline-flex; align-items: center; gap: 0.25rem;
-            padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.875rem;
-            background: white; border: 1px solid #e5e7eb;
-            transition: all 0.15s;
-        }}
-        .nav-btn:hover {{ border-color: #6366f1; color: #6366f1; }}
-        @media (prefers-color-scheme: dark) {{
-            .section-card {{ background: #1e1e2e; }}
-            .key-point {{ background: linear-gradient(135deg, #1a1a2e 0%, #1e1e3a 100%); }}
-            .item-card {{ border-color: #2a2a3e; }}
-            .item-card:hover {{ border-color: #4a4a6e; background: #22223a; }}
-            .editor-note {{ background: linear-gradient(135deg, #2a2010 0%, #1e1a0e 100%); }}
-            .nav-btn {{ background: #1e1e2e; border-color: #2a2a3e; }}
-            .nav-btn:hover {{ border-color: #6366f1; }}
-        }}
-        @media (max-width: 640px) {{ .section-card {{ padding: 1rem; }} .key-point {{ padding: 0.75rem 1rem; }} }}
+        * { transition: background-color 0.2s ease, border-color 0.2s ease; }
+        body { font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; }
+        code { font-family: 'JetBrains Mono', monospace; }
+        .section-card { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06); }
+        .source-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+        .key-point { padding: 1rem 1.25rem; margin-bottom: 0.75rem; border-radius: 12px; background: linear-gradient(135deg, #f8f9ff 0%, #f0f1ff 100%); border-left: 4px solid #6366f1; }
+        .key-point:last-child { margin-bottom: 0; }
+        .item-card { padding: 0.875rem 1rem; margin-bottom: 0.625rem; border-radius: 10px; border: 1px solid #f0f0f0; }
+        .item-card:hover { border-color: #e0e0ff; background: #fafaff; }
+        .item-card:last-child { margin-bottom: 0; }
+        .editor-note { background: linear-gradient(135deg, #fef9f0 0%, #fff4e6 100%); border-radius: 12px; padding: 1.25rem; border-left: 4px solid #f59e0b; }
+        .nav-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.875rem; background: white; border: 1px solid #e5e7eb; transition: all 0.15s; }
+        .nav-btn:hover { border-color: #6366f1; color: #6366f1; }
+        .toolbar-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; transition: all 0.15s; user-select: none; }
+        .toolbar-btn:hover { background: rgba(255,255,255,0.2); }
+        .font-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.15s; }
+        .font-btn:hover { background: rgba(255,255,255,0.2); }
+        .font-btn.active { background: rgba(255,255,255,0.25); }
+        #backToTop { position: fixed; bottom: 24px; right: 24px; width: 44px; height: 44px; border-radius: 50%; background: #6366f1; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(99,102,241,0.3); opacity: 0; transform: translateY(20px); transition: all 0.3s; z-index: 50; }
+        #backToTop.show { opacity: 1; transform: translateY(0); }
+        #backToTop:hover { box-shadow: 0 6px 20px rgba(99,102,241,0.4); transform: translateY(-2px); }
+        .text-sm-body { font-size: 0.875rem; line-height: 1.7; }
+        .text-base-body { font-size: 1rem; line-height: 1.75; }
+        .text-lg-body { font-size: 1.125rem; line-height: 1.8; }
+        @media (prefers-color-scheme: dark) {
+            body:not(.light) .section-card, body.dark .section-card { background: #1e1e2e; }
+            body:not(.light) .key-point, body.dark .key-point { background: linear-gradient(135deg, #1a1a2e 0%, #1e1e3a 100%); }
+            body:not(.light) .item-card, body.dark .item-card { border-color: #2a2a3e; }
+            body:not(.light) .item-card:hover, body.dark .item-card:hover { border-color: #4a4a6e; background: #22223a; }
+            body:not(.light) .editor-note, body.dark .editor-note { background: linear-gradient(135deg, #2a2010 0%, #1e1a0e 100%); }
+            body:not(.light) .nav-btn, body.dark .nav-btn { background: #1e1e2e; border-color: #2a2a3e; }
+            body:not(.light) .nav-btn:hover, body.dark .nav-btn:hover { border-color: #6366f1; }
+        }
+        @media (max-width: 640px) { .section-card { padding: 1rem; } .key-point { padding: 0.75rem 1rem; } }
     </style>
 </head>
-<body class="bg-[#f6f8fc] text-gray-800 dark:bg-[#0f0f1a] dark:text-gray-200">
+<body class="bg-[#f6f8fc] text-gray-800 text-sm-body dark:bg-[#0f0f1a] dark:text-gray-200">
+    <!-- 返回顶部 -->
+    <div id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+    </div>
+
     <div class="max-w-3xl mx-auto px-4 py-6 md:py-10">
 
         <!-- 头部 -->
         <header class="mb-6">
-            <div class="bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-400 rounded-2xl p-5 md:p-7 text-white">
+            <div class="bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-400 rounded-2xl p-5 md:p-7 text-white relative overflow-hidden">
                 <div class="flex items-center justify-between mb-2">
                     <a href="/ai-daily/" class="hover:opacity-80 transition-opacity">
                         <h1 class="text-xl md:text-2xl font-bold tracking-tight">AI 日报</h1>
                     </a>
-                    <a href="/ai-daily/archive.html" class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hover:bg-white/30 transition">
-                        历史归档
-                    </a>
+                    <div class="flex items-center gap-1">
+                        <!-- 字体大小 -->
+                        <span class="text-xs text-white/60 mr-1">字体</span>
+                        <span class="font-btn text-xs" onclick="setFontSize('sm')" id="fs-sm">A</span>
+                        <span class="font-btn text-sm" onclick="setFontSize('base')" id="fs-base">A</span>
+                        <span class="font-btn text-base" onclick="setFontSize('lg')" id="fs-lg">A</span>
+                        <span class="w-px h-5 bg-white/20 mx-1"></span>
+                        <!-- 暗色模式 -->
+                        <span class="toolbar-btn" onclick="toggleDark()" id="darkToggle" title="切换暗色模式">
+                            <svg id="sunIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                            </svg>
+                            <svg id="moonIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                            </svg>
+                        </span>
+                        <a href="/ai-daily/archive.html" class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hover:bg-white/30 transition ml-1">
+                            归档
+                        </a>
+                    </div>
                 </div>
                 <p class="text-white/80 text-sm">{date}</p>
             </div>
+
             <!-- 日期导航 -->
             <div class="flex items-center justify-between mt-4">
                 {nav_prev}
@@ -102,12 +116,14 @@ DAILY_TEMPLATE = """<!DOCTYPE html>
         </header>
 
         <!-- 内容 -->
-        {content_html}
+        <div id="contentArea">
+            {content_html}
+        </div>
 
         <!-- 底部 -->
         <footer class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 text-center">
             <p class="text-sm text-gray-400">
-                由 AI 自动生成 · 数据来源 arXiv / GitHub / Hacker News
+                由 AI 自动生成 · 数据来源 arXiv / GitHub / HN / Tech News
             </p>
             <p class="text-xs text-gray-300 mt-1">
                 <a href="https://github.com/RexChen595223656/ai-daily" class="hover:text-indigo-500 transition" target="_blank" rel="noopener">
@@ -117,6 +133,49 @@ DAILY_TEMPLATE = """<!DOCTYPE html>
             {nav_bottom}
         </footer>
     </div>
+
+    <script>
+        // 暗色模式
+        function getTheme() { return localStorage.getItem('theme') || 'auto'; }
+        function applyTheme(theme) {
+            const d = document.documentElement;
+            const sun = document.getElementById('sunIcon'), moon = document.getElementById('moonIcon');
+            if (theme === 'dark') {
+                d.classList.add('dark'); document.body.classList.remove('light'); document.body.classList.add('dark');
+                sun.style.display = 'none'; moon.style.display = '';
+            } else if (theme === 'light') {
+                d.classList.remove('dark'); document.body.classList.remove('dark'); document.body.classList.add('light');
+                sun.style.display = ''; moon.style.display = 'none';
+            } else {
+                d.classList.remove('dark'); document.body.classList.remove('dark','light');
+                sun.style.display = ''; moon.style.display = 'none';
+            }
+        }
+        function toggleDark() {
+            const cur = getTheme();
+            const next = cur === 'dark' ? 'light' : cur === 'light' ? 'auto' : 'dark';
+            localStorage.setItem('theme', next);
+            applyTheme(next);
+        }
+        applyTheme(getTheme());
+
+        // 字体大小
+        function setFontSize(size) {
+            const el = document.getElementById('contentArea');
+            el.classList.remove('text-sm-body', 'text-base-body', 'text-lg-body');
+            el.classList.add('text-' + size + '-body');
+            localStorage.setItem('fontSize', size);
+            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('fs-' + size).classList.add('active');
+        }
+        const savedFs = localStorage.getItem('fontSize') || 'sm';
+        setFontSize(savedFs);
+
+        // 返回顶部
+        window.addEventListener('scroll', function() {
+            document.getElementById('backToTop').classList.toggle('show', window.scrollY > 400);
+        });
+    </script>
 </body>
 </html>"""
 
@@ -339,19 +398,21 @@ def render_daily(md_content: str, date: str, prev_date: str = "", next_date: str
     """渲染单期日报"""
     content_html = markdown_to_html(md_content)
 
-    def _btn(label, d, is_prev):
+    def _btn(label, d):
         if not d:
             return f'<span class="nav-btn opacity-30 cursor-not-allowed">{label}</span>'
         return f'<a href="daily-{d}.html" class="nav-btn">{label}</a>'
 
-    prev_btn = _btn("← 前一日", prev_date, True)
-    next_btn = _btn("后一日 →", next_date, False)
+    prev_btn = _btn("← 前一日", prev_date)
+    next_btn = _btn("后一日 →", next_date)
     nav_bottom = f'<div class="flex justify-center gap-3 mt-3">{prev_btn}{next_btn}</div>' if (prev_date or next_date) else ""
 
-    return DAILY_TEMPLATE.format(
-        date=date, content_html=content_html,
-        nav_prev=prev_btn, nav_next=next_btn, nav_bottom=nav_bottom
-    )
+    html = DAILY_TEMPLATE
+    for k, v in [("{date}", date), ("{content_html}", content_html),
+                 ("{nav_prev}", prev_btn), ("{nav_next}", next_btn),
+                 ("{nav_bottom}", nav_bottom)]:
+        html = html.replace(k, v)
+    return html
 
 
 def render_archive(dates: List[str]) -> str:
