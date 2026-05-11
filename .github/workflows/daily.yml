@@ -36,6 +36,9 @@ jobs:
       - name: Generate daily report
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          PUSH_CHANNEL: ${{ secrets.PUSH_CHANNEL }}
+          SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
         run: python src/main.py
 
       - name: Setup Pages

@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from fetcher import fetch_all
 from summarizer import generate_daily_report
 from renderer import save_html, save_archive, update_archive, _read_archive
+from notifier import push
 
 
 def main():
@@ -83,9 +84,15 @@ def main():
     # 归档页
     save_archive(all_dates)
 
+    # Step 4: 推送
+    page_url = f"https://rexchen595223656.github.io/ai-daily/daily-{date_str}.html"
+    push(md_content, page_url)
+
     print(f"\n🎉 完成！")
     print(f"   https://rexchen595223656.github.io/ai-daily/")
     print(f"   https://rexchen595223656.github.io/ai-daily/archive.html")
+    if os.getenv("PUSH_CHANNEL"):
+        print(f"   📲 已推送至 {os.getenv('PUSH_CHANNEL')}")
 
 
 if __name__ == "__main__":
