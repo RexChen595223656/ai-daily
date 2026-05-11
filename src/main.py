@@ -25,7 +25,7 @@ def main():
     parser.add_argument("--arxiv", type=int, default=8, help="arXiv 论文数量")
     parser.add_argument("--hn", type=int, default=30, help="Hacker News 抓取数量")
     parser.add_argument("--no-ai", action="store_true", help="仅抓取数据，不调用 AI")
-    parser.add_argument("--model", default="claude-sonnet-4-20250514", help="Claude 模型名称")
+    parser.add_argument("--model", default="deepseek-chat", help="LLM 模型名称")
     parser.add_argument("--output", type=str, help="输出文件路径（默认 output/daily-<日期>.html）")
     args = parser.parse_args()
 
@@ -58,7 +58,7 @@ def main():
         md_content = "\n".join(md_lines)
     else:
         # Step 2: AI 生成日报
-        print("🤖 正在调用 Claude 生成日报...")
+        print("🤖 正在调用 DeepSeek 生成日报...")
         try:
             md_content = generate_daily_report(raw_data, model=args.model)
         except ValueError as e:

@@ -1,11 +1,10 @@
-"""AI 摘要模块：调用 Claude API 将原始数据转为结构化日报"""
+"""AI 摘要模块：调用 DeepSeek API 将原始数据转为结构化日报"""
 
 import os
 from typing import Dict, List
-from anthropic import Anthropic
+from openai import OpenAI
 
 
-# 系统 Prompt：定义 AI 日报编辑的角色和行为
 SYSTEM_PROMPT = """你是一位专业的 AI 领域日报编辑。你的任务是阅读今天收集的 AI 相关资讯（论文、开源项目、社区讨论），然后产出一份结构清晰、有洞察力的日报。
 
 ## 输出格式要求
@@ -40,11 +39,10 @@ SYSTEM_PROMPT = """你是一位专业的 AI 领域日报编辑。你的任务是
 
 
 def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
-    """将抓取的结构化数据组装成给 Claude 的 Prompt"""
+    """将抓取的结构化数据组装成给 LLM 的 Prompt"""
     sections = []
     sections.append(f"日期：{data.get('date', 'unknown')}")
 
-    # arXiv 论文
     papers = data.get("arxiv_papers", [])
     if papers:
         sections.append("\n## 最新论文")
@@ -59,7 +57,6 @@ def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
     else:
         sections.append("\n## 最新论文\n今日无新论文数据。")
 
-    # GitHub Trending
     repos = data.get("github_trending", [])
     if repos:
         sections.append("\n## 热门开源项目")
@@ -73,7 +70,6 @@ def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
     else:
         sections.append("\n## 热门开源项目\n今日无热门仓库数据。")
 
-    # Hacker News
     stories = data.get("hackernews", [])
     if stories:
         sections.append("\n## 社区热议")
@@ -86,23 +82,25 @@ def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
 
 
 def generate_daily_report(data: Dict[str, List[Dict]],
-                          model: str = "claude-sonnet-4-20250514") -> str:
-    """调用 Claude 生成日报"""
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+                          model: str = "deepseek-chat") -> str:
+    """调用 DeepSeek 生成日报"""
+    api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY 未设置，请在 .env 文件中配置")
+        raise ValueError("DEEPSEEK_API_KEY 未设置，请在 .env 文件中配置")
 
-    client = Anthropic(api_key=api_key)
+    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
     user_prompt = build_user_prompt(data)
 
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=model,
         max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
     )
 
-    return response.content[0].text
+    return response.choices[0].message.content
 
 
 if __name__ == "__main__":
