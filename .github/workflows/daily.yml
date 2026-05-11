@@ -41,6 +41,16 @@ jobs:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
         run: python src/main.py
 
+      - name: Generate weekly trend report (Sundays only)
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          if [ $(date +%u) -eq 7 ]; then
+            python src/main.py --trend 7
+          else
+            echo "Today is not Sunday (今天: $(date +%A))"
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

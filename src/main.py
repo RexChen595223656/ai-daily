@@ -11,8 +11,9 @@ from dotenv import load_dotenv
 
 from fetcher import fetch_all
 from summarizer import generate_daily_report
-from renderer import save_html, save_archive, save_rss, update_archive, _read_archive
+from renderer import save_html, save_archive, save_rss, save_trend_report, update_archive, _read_archive
 from notifier import push
+from trends import analyze_keywords
 
 
 def _update_search_index(date_str: str, md_content: str):
@@ -75,7 +76,26 @@ def main():
     parser.add_argument("--no-ai", action="store_true", help="仅抓取数据，不调用 AI")
     parser.add_argument("--model", default="deepseek-chat", help="LLM 模型名称")
     parser.add_argument("--output", type=str, help="输出文件路径")
+    parser.add_argument("--trend", type=int, default=0,
+                        help="生成趋势报告，指定天数（7=周报，30=月报）")
     args = parser.parse_args()
+
+    # 趋势模式：不抓取数据，直接从历史分析
+    if args.trend > 0:
+        print(f"📊 正在生成 {args.trend} 天趋势报告...")
+        try:
+            trend_md = analyze_keywords(days=args.trend)
+            if not trend_md:
+                print("⚠️ 数据不足，至少需要 2 期日报才能生成趋势")
+                return
+            end_date = datetime.now().strftime("%Y-%m-%d")
+            start_date = (datetime.now() - __import__("datetime").timedelta(days=args.trend)).strftime("%Y-%m-%d")
+            from renderer import save_trend_report
+            save_trend_report(trend_md, start_date, end_date, args.trend)
+            print(f"✅ 趋势报告完成")
+        except ValueError as e:
+            print(f"❌ {e}")
+        return
 
     # Step 1: 抓取数据
     print("🔍 正在抓取数据源...")

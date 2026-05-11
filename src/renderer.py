@@ -558,6 +558,35 @@ def save_rss(items: List[Dict]):
     print(f"✅ RSS 已生成: {path}")
 
 
+def save_trend_report(md_content: str, start: str, end: str, days: int):
+    """生成并保存趋势周报/月报页面"""
+    label = "周报" if days <= 10 else "月报"
+    title = f"AI 趋势{label} - {start} 至 {end}"
+
+    content_html = markdown_to_html(md_content)
+
+    # 用日报模板渲染，但插入趋势内容
+    html = DAILY_TEMPLATE
+    for k, v in [("{date}", f"{start} ~ {end}"),
+                 ("{content_html}", content_html),
+                 ("{nav_prev}", ""), ("{nav_next}", ""),
+                 ("{nav_bottom}", "")]:
+        html = html.replace(k, v)
+    # 替换标题
+    html = html.replace(f"AI 日报 - {start} ~ {end}", title)
+    html = html.replace("<title>AI 日报", "<title>" + title.split(" - ")[0])
+
+    report_type = "weekly" if days <= 10 else "monthly"
+    path = f"output/trend-{report_type}.html"
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"✅ 趋势{label}已生成: {path}")
+
+    # 趋势报告链接单独存在，后续可在归档页展示
+    with open("output/trends.json", "w") as f:
+        json.dump({"type": label, "start": start, "end": end, "days": days}, f)
+
+
 def save_archive(dates: List[str]):
     """生成并保存归档页面"""
     html = render_archive(dates)
