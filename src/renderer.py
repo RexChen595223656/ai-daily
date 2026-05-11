@@ -3,8 +3,9 @@
 import re
 import json
 import os
-from datetime import datetime
-from typing import Optional, List
+import email.utils
+from datetime import datetime, timezone
+from typing import Optional, List, Dict
 
 
 ARCHIVE_INDEX = "output/reports.json"
@@ -97,6 +98,9 @@ DAILY_TEMPLATE = """<!DOCTYPE html>
                                 <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
                             </svg>
                         </span>
+                        <a href="feed.xml" class="bg-orange-500/30 backdrop-blur-sm text-orange-200 text-xs px-2.5 py-1.5 rounded-full font-medium hover:bg-orange-500/50 transition">
+                            RSS
+                        </a>
                         <a href="/ai-daily/archive.html" class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hover:bg-white/30 transition ml-1">
                             归档
                         </a>
@@ -218,9 +222,14 @@ ARCHIVE_TEMPLATE = """<!DOCTYPE html>
                     <a href="/ai-daily/" class="hover:opacity-80 transition-opacity">
                         <h1 class="text-2xl md:text-3xl font-bold tracking-tight">AI 日报</h1>
                     </a>
-                    <a href="/ai-daily/" class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hover:bg-white/30 transition">
-                        最新一期
-                    </a>
+                    <div class="flex items-center gap-2">
+                        <a href="feed.xml" class="bg-orange-500/30 backdrop-blur-sm text-orange-200 text-xs px-3 py-1.5 rounded-full font-medium hover:bg-orange-500/50 transition">
+                            RSS
+                        </a>
+                        <a href="/ai-daily/" class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hover:bg-white/30 transition">
+                            最新一期
+                        </a>
+                    </div>
                 </div>
                 <p class="text-white/80 text-sm mt-1">共 {count} 期 · 每天更新</p>
             </div>
@@ -503,6 +512,50 @@ def save_html(md_content: str, output_path: str, date: str = "",
         f.write(html)
     print(f"✅ 日报已生成: {output_path}")
     return output_path
+
+
+def render_rss(items: List[Dict]) -> str:
+    """生成 RSS feed XML"""
+    now_rfc = email.utils.format_datetime(datetime.now(timezone.utc))
+    entries = []
+    for item in items[:20]:  # 最多 20 条
+        date_str = item["date"]
+        title = item.get("title", f"AI 日报 - {date_str}")
+        desc = item.get("summary", title)
+        desc_escaped = desc.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+        title_escaped = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        pub_date = email.utils.format_datetime(
+            datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        )
+        entries.append(f"""    <item>
+      <title>{title_escaped}</title>
+      <link>https://rexchen595223656.github.io/ai-daily/daily-{date_str}.html</link>
+      <description><![CDATA[{desc}]]></description>
+      <pubDate>{pub_date}</pubDate>
+      <guid>https://rexchen595223656.github.io/ai-daily/daily-{date_str}.html</guid>
+    </item>""")
+
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>AI 日报</title>
+    <description>每天聚合 arXiv / GitHub / Hacker News / 科技新闻，AI 生成摘要</description>
+    <link>https://rexchen595223656.github.io/ai-daily/</link>
+    <atom:link href="https://rexchen595223656.github.io/ai-daily/feed.xml" rel="self" type="application/rss+xml"/>
+    <language>zh-CN</language>
+    <lastBuildDate>{now_rfc}</lastBuildDate>
+{chr(10).join(entries)}
+  </channel>
+</rss>"""
+
+
+def save_rss(items: List[Dict]):
+    """生成并保存 RSS feed"""
+    xml = render_rss(items)
+    path = "output/feed.xml"
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(xml)
+    print(f"✅ RSS 已生成: {path}")
 
 
 def save_archive(dates: List[str]):

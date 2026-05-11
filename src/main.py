@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from fetcher import fetch_all
 from summarizer import generate_daily_report
-from renderer import save_html, save_archive, update_archive, _read_archive
+from renderer import save_html, save_archive, save_rss, update_archive, _read_archive
 from notifier import push
 
 
@@ -42,9 +42,18 @@ def _update_search_index(date_str: str, md_content: str):
             title = line.replace("# ", "").strip()
             break
 
+    # 提取摘要：今日趋势部分的前 500 字符
+    summary = title
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("- **") and len(stripped) > 20:
+            summary = stripped[2:].replace("**", "").strip()[:300]
+            break
+
     entry = {
         "date": date_str,
         "title": title,
+        "summary": summary,
         "keywords": list(set(k for k in keywords if len(k) > 2))[:50]
     }
     index = [e for e in index if e["date"] != date_str]
@@ -126,6 +135,14 @@ def main():
 
     # 归档页
     save_archive(all_dates)
+
+    # RSS 订阅
+    try:
+        with open("output/search_index.json", "r") as f:
+            rss_items = json.load(f)
+        save_rss(rss_items)
+    except Exception as e:
+        print(f"⚠️ RSS 生成跳过: {e}")
 
     # Step 4: 推送
     page_url = f"https://rexchen595223656.github.io/ai-daily/daily-{date_str}.html"
