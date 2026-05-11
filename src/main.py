@@ -50,6 +50,7 @@ def _update_search_index(date_str: str, md_content: str):
     index = [e for e in index if e["date"] != date_str]
     index.append(entry)
     index.sort(key=lambda x: x["date"], reverse=True)
+    os.makedirs("output", exist_ok=True)
     with open(index_path, "w", encoding="utf-8") as f:
         json.dump(index, f, ensure_ascii=False)
 
