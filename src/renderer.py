@@ -179,12 +179,13 @@ ARCHIVE_TEMPLATE = """<!DOCTYPE html>
 
 
 SECTION_ICONS = {
-    "📌 今日要点": "📌",
+    "📌 今日趋势": "📌",
     "📄 论文精读": "📄",
     "⭐ 热门开源": "⭐",
     "🛠 科技新闻": "🛠",
     "💬 社区热议": "💬",
     "🤖 编辑点评": "🤖",
+    "🤖 主编点评": "🤖",
 }
 
 SECTION_CLASS = {
@@ -261,7 +262,7 @@ def markdown_to_html(md_text: str) -> str:
 
 def _parse_section_content(lines: list, section_title: str) -> str:
     html_parts = []
-    is_key_points = "今日要点" in section_title
+    is_key_points = "今日趋势" in section_title or "今日要点" in section_title
     is_editor_note = "编辑点评" in section_title
     for line in lines:
         stripped = line.strip()

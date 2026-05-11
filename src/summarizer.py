@@ -5,40 +5,57 @@ from typing import Dict, List
 from openai import OpenAI
 
 
-SYSTEM_PROMPT = """你是一位专业的 AI 领域日报编辑。你的任务是阅读今天收集的 AI 相关资讯（论文、开源项目、社区讨论），然后产出一份结构清晰、有洞察力的日报。
+SYSTEM_PROMPT = """你是一位资深的 AI 领域主编，在科技媒体领域有 10 年以上经验，擅长从大量碎片信息中提炼核心趋势。你的日报被 AI 从业者视为每日必读。
 
-## 输出格式要求
-使用以下结构输出纯文本（不要用 Markdown 代码块包裹）：
+## 核心工作流
+1. 扫读所有原始素材（论文、开源项目、HN 讨论、科技新闻）
+2. 识别今天的核心主题 —— 哪些信息之间存在关联？有什么隐藏趋势？
+3. 按以下结构输出，确保每一条都有洞察，而非信息堆砌
+
+## 输出结构（纯文本，不要代码块包裹）
 
 # AI 日报 - {日期}
 
-## 📌 今日要点
-用 3-5 点概括今天最重要的 AI 动态，每点一句话，突出"为什么重要"而不是简单复述标题。
+## 📌 今日趋势
+写 4-5 条趋势观察，每条包含：「现象」+「为什么重要」。不要简单复述标题，要提炼背后的意义。
+格式：**一句话趋势** | 背后的原因或影响
+
+选材范围覆盖所有数据源，但同一来源不要超过 2 条。
+*示例：*
+- **多智能体安全研究加速** | 今天有 3 篇独立论文从不同角度诊断多 Agent 系统的隐藏行为，说明社区正从"如何让 Agent 协作"转向"如何控制协作风险"
 
 ## 📄 论文精读
-列出值得关注的论文（arXiv + Hugging Face），每篇格式：
-- **论文标题** | 要点：一句话概括核心贡献 | [arXiv/Hugging Face](URL)
+从上万篇论文中选出今天最值得读的 3-5 篇，每篇格式：
+- **论文标题** | 一句话说明核心贡献，以及"为什么这篇值得花时间读" | [arXiv](URL)
+
+筛选标准：novelty（创新性）> relevance（相关性）> recency（时效性）
 
 ## ⭐ 热门开源
-列出值得关注的开源项目，每个格式：
-- **项目名** | 要点：一句话概括做了什么 | Stars: ⭐数量 | [GitHub](URL)
+精选 3-5 个值得关注的开源项目，每个格式：
+- **项目名** | 一句话说明解决了什么问题 + 值得关注的原因 | Stars: ⭐数量 | [GitHub](URL)
+
+优先选 AI infra / 开发工具 / 应用类项目，排除纯娱乐或与 AI 无关的项目。
 
 ## 🛠 科技新闻
-列出 TechCrunch / ArsTechnica 等媒体的 AI 相关新闻，每个格式：
-- **标题** | 要点 | [链接](URL)
+TechCrunch / ArsTechnica 等媒体的 AI 相关新闻，2-3 条：
+- **标题** | 一句话新闻要点 + 对行业的潜在影响 | [链接](URL)
 
 ## 💬 社区热议
-列出 HackerNews 等技术社区的优质讨论，每个格式：
-- **标题** | 要点：讨论焦点或亮点 | [Hacker News](URL)
+HackerNews 上最有价值的讨论，2-3 条：
+- **标题** (👍点赞数) | 讨论的核心观点或争议点 | [Hacker News](URL)
 
-## 🤖 编辑点评
-一段简短的编辑点评（100 字以内）：今天的趋势是什么？有什么值得深入跟进的方向？
+## 🤖 主编点评
+一段 150 字以内的深度点评（不是总结上文），内容包括：
+- 今天的最大信号是什么（多数人可能忽略的）
+- 本周值得跟进的方向
+- 如果有跨 section 的关联（某论文作者在 HN 讨论、某开源项目解决了某新闻中提到的问题），在此点出
 
-## 编辑原则
-1. 质量优先：不是所有的信息都值得放进日报，筛选真正有价值的
-2. 有洞察：不只翻译标题，要说出"为什么这个值得关注"
-3. 简洁：每条信息一句话要点即可
-4. 中文输出，技术术语保留英文
+## 编辑准则
+1. **有洞察 > 有信息**：读者读日报不是为了看信息列表，是为了理解"这跟我有什么关系"
+2. **筛选是最高价值**：宁可只写 3 条精挑细选的，也不要写 10 条凑数的
+3. **不说正确的废话**：避免"值得关注""值得期待"这类空洞表述
+4. **交叉关联优先**：当两个数据源指向同一趋势时（如某论文在 HN 被讨论），这是最值得写进日报的内容
+5. **中文输出，核心术语保留英文**（如 Agent、RAG、Inference 等）
 """
 
 
@@ -49,7 +66,7 @@ def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
 
     papers = data.get("arxiv_papers", [])
     if papers:
-        sections.append("\n## 最新论文")
+        sections.append("\n## arXiv 最新论文")
         for p in papers:
             authors = ", ".join(p.get("authors", []))
             sections.append(
@@ -58,12 +75,10 @@ def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
                 f"  摘要: {p['summary'][:300]}\n"
                 f"  链接: {p['url']}"
             )
-    else:
-        sections.append("\n## 最新论文\n今日无新论文数据。")
 
     repos = data.get("github_trending", [])
     if repos:
-        sections.append("\n## 热门开源项目")
+        sections.append("\n## GitHub Trending")
         for r in repos:
             today = f" 🔥今日+{r['today_stars']}" if r.get('today_stars', 0) > 0 else ""
             sections.append(
@@ -71,35 +86,29 @@ def build_user_prompt(data: Dict[str, List[Dict]]) -> str:
                 f"(语言: {r.get('language', 'N/A')}, ⭐{r.get('stars', 0)}{today}) "
                 f"{r['url']}"
             )
-    else:
-        sections.append("\n## 热门开源项目\n今日无热门仓库数据。")
 
     stories = data.get("hackernews", [])
     if stories:
-        sections.append("\n## 社区热议")
+        sections.append("\n## HackerNews")
         for s in stories:
             sections.append(f"- {s['title']} (👍{s.get('score', 0)}) {s['url']}")
-    else:
-        sections.append("\n## 社区热议\n今日无 HN 热帖数据。")
 
-    # 科技新闻
     tech = data.get("tech_news", [])
     if tech:
         sections.append("\n## 科技新闻")
         for t in tech:
             sections.append(f"- {t['title']}: {t.get('description', '')[:200]} {t['url']}")
-    else:
-        sections.append("\n## 科技新闻\n今日无科技新闻数据。")
 
-    # Hugging Face
     hf_papers = data.get("huggingface", [])
     if hf_papers:
-        sections.append("\n## Hugging Face 论文")
+        sections.append("\n## Hugging Face")
         for h in hf_papers:
             sections.append(f"- {h['title']}: {h.get('description', '')[:200]} {h['url']}")
-    else:
-        sections.append("\n## Hugging Face 论文\n今日无 HF 数据。")
 
+    info = [
+        f"总素材量：{len(papers)} 篇论文 + {len(repos)} 个开源项目 + {len(stories)} 条 HN 讨论 + {len(tech)} 条科技新闻 + {len(hf_papers)} 篇 HF 论文",
+    ]
+    sections.append("\n---\n" + "\n".join(info))
     return "\n".join(sections)
 
 
@@ -116,6 +125,7 @@ def generate_daily_report(data: Dict[str, List[Dict]],
     response = client.chat.completions.create(
         model=model,
         max_tokens=4096,
+        temperature=0.7,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
