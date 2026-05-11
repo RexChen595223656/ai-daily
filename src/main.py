@@ -2,6 +2,8 @@
 
 import os
 import sys
+import json
+import re
 import argparse
 from datetime import datetime
 
@@ -11,6 +13,45 @@ from fetcher import fetch_all
 from summarizer import generate_daily_report
 from renderer import save_html, save_archive, update_archive, _read_archive
 from notifier import push
+
+
+def _update_search_index(date_str: str, md_content: str):
+    """更新搜索索引"""
+    index_path = "output/search_index.json"
+    index = []
+    if os.path.exists(index_path):
+        try:
+            with open(index_path, "r") as f:
+                index = json.load(f)
+        except Exception:
+            pass
+
+    lines = md_content.split("\n")
+    keywords = []
+    for line in lines:
+        bold = re.findall(r'\*\*(.+?)\*\*', line)
+        keywords.extend(bold)
+        if line.startswith("- **"):
+            title = line.split("**")[1] if "**" in line else ""
+            if title:
+                keywords.append(title)
+
+    title = "AI 日报"
+    for line in lines:
+        if line.startswith("# AI 日报"):
+            title = line.replace("# ", "").strip()
+            break
+
+    entry = {
+        "date": date_str,
+        "title": title,
+        "keywords": list(set(k for k in keywords if len(k) > 2))[:50]
+    }
+    index = [e for e in index if e["date"] != date_str]
+    index.append(entry)
+    index.sort(key=lambda x: x["date"], reverse=True)
+    with open(index_path, "w", encoding="utf-8") as f:
+        json.dump(index, f, ensure_ascii=False)
 
 
 def main():
@@ -56,8 +97,9 @@ def main():
             print(f"❌ {e}")
             sys.exit(1)
 
-    # Step 2: 更新归档
+    # Step 2: 更新搜索索引 + 归档
     date_str = datetime.now().strftime("%Y-%m-%d")
+    _update_search_index(date_str, md_content)
     all_dates = update_archive(date_str)
 
     # 找出前一日期和后一日期用于导航

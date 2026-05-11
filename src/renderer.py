@@ -201,38 +201,102 @@ ARCHIVE_TEMPLATE = """<!DOCTYPE html>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
         body {{ font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; }}
+        .search-box {{ transition: all 0.2s; }}
+        .search-box:focus {{ box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }}
+        .hl {{ background: #fef08a; padding: 0 2px; border-radius: 2px; }}
+        @media (prefers-color-scheme: dark) {{
+            .hl {{ background: #854d0e; }}
+        }}
     </style>
 </head>
 <body class="bg-[#f6f8fc] text-gray-800 dark:bg-[#0f0f1a] dark:text-gray-200">
     <div class="max-w-3xl mx-auto px-4 py-6 md:py-10">
 
-        <!-- 头部 -->
         <header class="mb-8">
             <div class="bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-400 rounded-2xl p-6 md:p-8 text-white">
                 <div class="flex items-center justify-between mb-2">
                     <a href="/ai-daily/" class="hover:opacity-80 transition-opacity">
                         <h1 class="text-2xl md:text-3xl font-bold tracking-tight">AI 日报</h1>
                     </a>
-                    <span class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium">
-                        历史归档
-                    </span>
+                    <a href="/ai-daily/" class="bg-white/20 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium hover:bg-white/30 transition">
+                        最新一期
+                    </a>
                 </div>
                 <p class="text-white/80 text-sm mt-1">共 {count} 期 · 每天更新</p>
             </div>
         </header>
 
-        <!-- 日期列表 -->
+        <!-- 搜索框 -->
+        <div class="mb-6">
+            <input id="searchInput" type="text" placeholder="搜索日报内容（如：多智能体、RAG、本地部署）"
+                   class="search-box w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e1e2e] text-sm text-gray-800 dark:text-gray-200 outline-none">
+            <div class="text-xs text-gray-400 mt-1.5 ml-1">
+                <span id="resultCount">共 {count} 期</span>
+            </div>
+        </div>
+
+        <!-- 日期列表 + 搜索结果 -->
         <div class="section-card bg-white dark:bg-[#1e1e2e] rounded-2xl p-6 shadow-sm">
             <h2 class="text-lg font-bold mb-5 text-gray-900 dark:text-gray-100">📅 往期日报</h2>
-            <div class="space-y-2">
+            <div id="reportList" class="space-y-2">
                 {list_items}
             </div>
+            <div id="noResult" class="hidden text-center py-10 text-gray-400 text-sm">没有匹配的结果，试试其他关键词</div>
         </div>
 
         <footer class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 text-center">
             <p class="text-sm text-gray-400">由 AI 自动生成 · 每天更新</p>
         </footer>
     </div>
+
+    <script>
+        let searchIndex = [];
+        let allDates = [];
+
+        fetch('search_index.json')
+            .then(r => r.json())
+            .then(data => {
+                searchIndex = data;
+                allDates = data.map(d => d.date);
+            })
+            .catch(() => {});
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const q = this.value.trim().toLowerCase();
+            const list = document.getElementById('reportList');
+            const noRes = document.getElementById('noResult');
+            const count = document.getElementById('resultCount');
+
+            if (!q || searchIndex.length === 0) {
+                list.innerHTML = '{list_items}';
+                noRes.classList.add('hidden');
+                count.textContent = '共 ' + allDates.length + ' 期';
+                return;
+            }
+
+            const results = searchIndex.filter(item =>
+                item.title.toLowerCase().includes(q) ||
+                item.keywords.some(k => k.includes(q))
+            );
+
+            if (results.length === 0) {
+                list.innerHTML = '';
+                noRes.classList.remove('hidden');
+                count.textContent = '未找到匹配结果';
+                return;
+            }
+
+            noRes.classList.add('hidden');
+            count.textContent = '找到 ' + results.length + ' 条结果';
+
+            list.innerHTML = results.map(r => `
+                <a href="daily-${r.date}.html" class="flex items-center justify-between p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition group">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">📅 ${r.date}</span>
+                    <span class="text-xs text-indigo-500 group-hover:text-indigo-400 ml-4 truncate max-w-[300px] text-right">${r.title}</span>
+                </a>
+            `).join('');
+        });
+    </script>
 </body>
 </html>"""
 
@@ -426,7 +490,7 @@ def render_archive(dates: List[str]) -> str:
             f'<span class="text-xs text-gray-400 group-hover:text-indigo-400">→</span>'
             f'</a>'
         )
-    return ARCHIVE_TEMPLATE.format(count=len(dates), list_items="\n".join(items))
+    return ARCHIVE_TEMPLATE.replace("{count}", str(len(dates))).replace("{list_items}", "\n".join(items))
 
 
 def save_html(md_content: str, output_path: str, date: str = "",
