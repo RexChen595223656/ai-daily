@@ -280,7 +280,9 @@ def fetch_huggingface(max_results: int = 5) -> List[Dict]:
 def fetch_all(max_arxiv: int = 8, max_hn: int = 30,
               max_ph: int = 5, max_hf: int = 5) -> Dict[str, List[Dict]]:
     """抓取所有数据源，返回聚合结果"""
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    from datetime import timezone as tz
+    tz_cst = timezone(timedelta(hours=8))  # 北京时间 (UTC+8)
+    now = datetime.now(tz_cst).strftime("%Y-%m-%d %H:%M CST")
 
     papers = fetch_arxiv(max_results=max_arxiv)
     repos = fetch_github_trending()

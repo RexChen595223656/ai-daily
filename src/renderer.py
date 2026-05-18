@@ -64,6 +64,17 @@ DAILY_TEMPLATE = """<!DOCTYPE html>
             body:not(.light) .nav-btn, body.dark .nav-btn { background: #1e1e2e; border-color: #2a2a3e; }
             body:not(.light) .nav-btn:hover, body.dark .nav-btn:hover { border-color: #6366f1; }
         }
+        /* 手动暗色切换（无视系统偏好） */
+        body.dark { background: #0f0f1a !important; color: #d1d5db !important; }
+        body.dark .section-card { background: #1e1e2e !important; }
+        body.dark .key-point { background: linear-gradient(135deg, #1a1a2e 0%, #1e1e3a 100%) !important; border-left-color: #818cf8 !important; }
+        body.dark .item-card { border-color: #2a2a3e !important; }
+        body.dark .item-card:hover { border-color: #4a4a6e !important; background: #22223a !important; }
+        body.dark .editor-note { background: linear-gradient(135deg, #2a2010 0%, #1e1a0e 100%) !important; }
+        body.dark .nav-btn { background: #1e1e2e !important; border-color: #2a2a3e !important; }
+        body.dark .nav-btn:hover { border-color: #6366f1 !important; }
+        body.dark .text-gray-700, body.dark .text-gray-800, body.dark .text-gray-900 { color: #d1d5db !important; }
+        body.dark a { color: #a5b4fc !important; }
         @media (max-width: 640px) { .section-card { padding: 1rem; } .key-point { padding: 0.75rem 1rem; } }
     </style>
 </head>
@@ -211,6 +222,7 @@ ARCHIVE_TEMPLATE = """<!DOCTYPE html>
         @media (prefers-color-scheme: dark) {{
             .hl {{ background: #854d0e; }}
         }}
+        body.dark .hl {{ background: #854d0e; }}
     </style>
 </head>
 <body class="bg-[#f6f8fc] text-gray-800 dark:bg-[#0f0f1a] dark:text-gray-200">
